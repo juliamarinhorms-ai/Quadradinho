@@ -74,14 +74,22 @@
 
   /* ---- Página inicial ---- */
   .continue{
-    display:flex; align-items:center; gap:12px; width:100%; border:0; cursor:pointer; text-align:left;
-    background:var(--wine); color:#fff; border-radius:18px; padding:12px 14px;
+    display:flex; align-items:center; gap:8px; width:100%;
+    background:var(--wine); color:#fff; border-radius:18px; padding:12px 12px 12px 14px;
   }
+  .cont-main{flex:1; min-width:0; display:flex; align-items:center; gap:12px; border:0; background:none; color:inherit; cursor:pointer; text-align:left; padding:0}
+  .cont-txt{display:flex; flex-direction:column; min-width:0}
+  .discard{
+    width:36px; height:36px; flex:none; border-radius:50%; border:0; cursor:pointer;
+    background:rgba(255,255,255,.14); color:#fff; display:flex; align-items:center; justify-content:center;
+  }
+  .discard svg{width:18px; height:18px}
+  .discard:active{background:rgba(255,255,255,.3)}
   .continue[hidden]{display:none}
   .continue .play{width:38px; height:38px; border-radius:50%; background:var(--coral); flex:none; display:flex; align-items:center; justify-content:center}
   .continue .play svg{width:16px; height:16px; margin-left:2px}
   .continue b{display:block; font-family:"Fredoka", sans-serif; font-weight:600; font-size:16px}
-  .continue span{font-size:12.5px; opacity:.8; font-weight:700}
+  .cont-txt > span{font-size:12.5px; opacity:.8; font-weight:700}
   .mode{
     width:100%; border:1.5px solid #eee5e6; background:#fff; border-radius:20px; padding:14px;
     display:flex; flex-direction:column; gap:12px; text-align:left; color:var(--ink);
@@ -233,10 +241,15 @@
       </button>
     </div>
 
-    <button class="continue" id="continueBtn" hidden>
-      <span class="play"><svg viewBox="0 0 24 24" fill="#fff"><path d="M7 4.5v15l12.5-7.5z"/></svg></span>
-      <span style="opacity:1"><b>Continuar jogo</b><span id="continueText"></span></span>
-    </button>
+    <div class="continue" id="continueBtn" hidden>
+      <button class="cont-main" id="continueMain">
+        <span class="play"><svg viewBox="0 0 24 24" fill="#fff"><path d="M7 4.5v15l12.5-7.5z"/></svg></span>
+        <span class="cont-txt"><b>Continuar jogo</b><span id="continueText"></span></span>
+      </button>
+      <button class="discard" id="discardBtn" aria-label="Descartar jogo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M7 7l10 10M17 7 7 17"/></svg>
+      </button>
+    </div>
 
     <div class="mode">
       <div class="mode-head">
@@ -770,7 +783,14 @@ const ENGINE = (() => {
   $("#lostAgain").onclick = () => { $("#lostDlg").classList.remove("show"); startGame(S.mode, S.level); };
   $("#lostHome").onclick = () => { $("#lostDlg").classList.remove("show"); showView("home"); };
   document.querySelectorAll("[data-start]").forEach(b => b.onclick = () => { const [m, l] = b.dataset.start.split(":"); askStart(m, l); });
-  $("#continueBtn").onclick = () => { if (!S) { S = load(); } if (S) { setupBoard(); showView("game"); } };
+  $("#discardBtn").onclick = () => {
+    const cur = S || load();
+    const drop = () => { try { localStorage.removeItem(KEY); } catch (e) {} S = null; showView("home"); };
+    if (!inProgress(cur)) return drop();
+    confirmBox("Descartar jogo?", "A partida em andamento será apagada e vai contar como desistência.", "Descartar",
+      () => { recordResult(cur, "quit"); drop(); });
+  };
+  $("#continueMain").onclick = () => { if (!S) { S = load(); } if (S) { setupBoard(); showView("game"); } };
   $("#backBtn").onclick = () => { save(); showView("home"); };
   $("#newBtn").onclick = () => askStart(S.mode, S.level);
   $("#winAgain").onclick = () => { $("#winDlg").classList.remove("show"); startGame(S.mode, S.level); };
