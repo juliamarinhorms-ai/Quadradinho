@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Quadradinho">
 <meta name="theme-color" content="#7b1523">
 <link rel="apple-touch-icon" href="icone.png">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" id="favIcon" href="">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -56,7 +57,7 @@
   h1, h2{font-family:"Silkscreen", "Courier New", monospace; font-weight:700; margin:0; color:var(--wine);
     letter-spacing:.5px; line-height:1.05; text-transform:uppercase; text-shadow:2px 2px 0 var(--cream)}
   h1{font-size:22px}
-  h2{font-size:17px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  h2{font-size:17px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:4px 3px 3px 0; margin:-4px 0 -3px}
   .sub{font-size:13px; color:var(--muted); margin-top:4px; font-weight:700}
   .stats{display:flex; gap:16px; text-align:center}
   .stat b{display:block; font-family:"Fredoka", sans-serif; font-weight:600; font-size:18px; color:var(--ink); font-variant-numeric:tabular-nums; line-height:1.1}
@@ -105,6 +106,35 @@
   .lv-medio{background:var(--lilac); color:var(--purple)}
   .lv-dificil{background:var(--coral); color:#fff}
   .lv-expert{background:var(--purple); color:#fff}
+
+  /* ---- Estatísticas ---- */
+  body.wide .app{width:min(calc(100vw - 16px), 440px)}
+  .statsbtn{
+    display:flex; align-items:center; justify-content:center; gap:8px; width:100%; cursor:pointer;
+    border:1.5px solid var(--wine); background:#fff; color:var(--wine); border-radius:999px; padding:11px;
+    font-family:"Fredoka", sans-serif; font-weight:600; font-size:15px;
+  }
+  .statsbtn svg{width:19px; height:19px}
+  .statsbtn:active{background:var(--lilac-soft)}
+  .statgrid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
+  .bigstat{border-radius:18px; padding:14px 4px 12px; text-align:center}
+  .bigstat b{display:block; font-family:"Fredoka", sans-serif; font-weight:600; font-size:30px; line-height:1.05}
+  .bigstat span{font-size:12px; font-weight:800; opacity:.9}
+  .bs-win{background:var(--coral); color:#fff}
+  .bs-lose{background:var(--purple); color:#fff}
+  .bs-quit{background:var(--cream); color:var(--wine)}
+  .rate{display:flex; flex-direction:column; gap:6px}
+  .rate-top{display:flex; justify-content:space-between; font-size:13px; font-weight:800; color:var(--muted)}
+  .rate-top b{color:var(--wine); font-family:"Fredoka", sans-serif; font-size:16px}
+  .bar{height:12px; border-radius:99px; background:var(--lilac-soft); overflow:hidden; display:flex}
+  .bar i{display:block; height:100%}
+  table.st{width:100%; border-collapse:collapse; font-size:13.5px}
+  table.st th{font-size:10.5px; color:var(--muted); font-weight:800; text-transform:uppercase; letter-spacing:.3px; padding:0 2px 6px; text-align:center}
+  table.st th:first-child, table.st td:first-child{text-align:left}
+  table.st td{padding:9px 2px; border-top:1px solid #f1ebec; text-align:center; font-family:"Fredoka", sans-serif; font-weight:500; font-variant-numeric:tabular-nums}
+  table.st td:first-child{font-family:"Nunito", sans-serif; font-weight:700; color:var(--ink)}
+  table.st td small{display:block; font-size:11px; color:var(--muted); font-weight:700}
+  .resetbtn{background:none; border:0; color:var(--muted); font-weight:700; font-size:13px; cursor:pointer; padding:4px; text-decoration:underline}
 
   /* ---- Tabuleiro ---- */
   #board{
@@ -240,6 +270,35 @@
         <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></span>
       </div>
     </button>
+
+    <button class="statsbtn" id="statsBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 20V12M12 20V5M19 20v-9"/></svg>
+      Minhas estatísticas
+    </button>
+  </section>
+
+  <!-- =========== ESTATÍSTICAS =========== -->
+  <section class="view" id="stats">
+    <div class="top">
+      <button class="back" data-home aria-label="Voltar ao início">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg>
+      </button>
+      <div class="gtitle"><h2>Estatísticas</h2><div class="sub" id="statsSub">0 partidas</div></div>
+    </div>
+    <div class="statgrid">
+      <div class="bigstat bs-win"><b id="stWon">0</b><span>vitórias</span></div>
+      <div class="bigstat bs-lose"><b id="stLost">0</b><span>derrotas</span></div>
+      <div class="bigstat bs-quit"><b id="stQuit">0</b><span>desistências</span></div>
+    </div>
+    <div class="rate">
+      <div class="rate-top"><span>Taxa de vitória</span><b id="stRate">0%</b></div>
+      <div class="bar" id="stBar"></div>
+    </div>
+    <table class="st">
+      <thead><tr><th>Modo</th><th>Vit.</th><th>Der.</th><th>Des.</th><th>Recorde</th></tr></thead>
+      <tbody id="stTable"></tbody>
+    </table>
+    <button class="resetbtn" id="resetStats">Zerar estatísticas</button>
   </section>
 
   <!-- =========== PÁGINA DO JOGO =========== -->
@@ -310,6 +369,18 @@
     <p id="winText"></p>
     <button class="primary" id="winAgain">Jogar de novo</button>
     <button id="winHome">Voltar ao início</button>
+  </div>
+</div>
+
+<div class="overlay" id="lostDlg">
+  <div class="dialog">
+    <div class="badge-big" style="background:var(--purple)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </div>
+    <h2>Fim de jogo</h2>
+    <p>Você chegou a 3 erros. Bora tentar de novo?</p>
+    <button class="primary" id="lostAgain">Tentar de novo</button>
+    <button id="lostHome">Voltar ao início</button>
   </div>
 </div>
 
@@ -447,7 +518,7 @@ const ENGINE = (() => {
 
 (() => {
   const $ = s => document.querySelector(s);
-  const KEY = "quadradinho-save-v2";
+  const KEY = "quadradinho-save-v2", STATS_KEY = "quadradinho-stats-v1", MAX_ERR = 3;
   const PAL = { wine:"#7b1523", coral:"#ff5b37", cream:"#f8df9f", lilac:"#dde2f4", purple:"#7c3d8f" };
   const TINTS = ["#fdf2d2", "#eef0fa", "#ffe7df", "#f3e6f5", "#f8e3e5"];
   const MODES = { classic:"Tradicional", irregular:"Irregular", mega:"Mega Sudoku" };
@@ -496,7 +567,39 @@ const ENGINE = (() => {
       $("#loadDlg").classList.remove("show");
     }, 60);
   }
-  const inProgress = s => s && !s.won && s.board.some((v, k) => v !== s.puz[k] || s.notes[k]);
+  const inProgress = s => s && !s.won && !s.lost && s.board.some((v, k) => v !== s.puz[k] || s.notes[k]);
+
+  // ---------- Estatísticas ----------
+  const ROWS = [["classic-facil","Tradicional","Fácil"],["classic-medio","Tradicional","Médio"],["classic-dificil","Tradicional","Difícil"],
+                ["classic-expert","Tradicional","Expert"],["irregular","Irregular","9×9"],["mega","Mega Sudoku","16×16"]];
+  const statKey = s => s.mode === "classic" ? "classic-" + s.level : s.mode;
+  function loadStats() { try { return JSON.parse(localStorage.getItem(STATS_KEY)) || {}; } catch (e) { return {}; } }
+  function saveStats(st) { try { localStorage.setItem(STATS_KEY, JSON.stringify(st)); } catch (e) {} }
+  function recordResult(s, kind) {
+    if (!s || s.recorded) return false;
+    s.recorded = true;
+    const st = loadStats(), k = statKey(s);
+    const r = st[k] = st[k] || { won: 0, lost: 0, quit: 0, best: null };
+    r[kind]++;
+    let record = false;
+    if (kind === "won" && !s.hints && (r.best == null || s.time < r.best)) { record = r.best != null; r.best = s.time; }
+    saveStats(st);
+    return record;
+  }
+  function renderStats() {
+    const st = loadStats(); let W = 0, L = 0, Q = 0, rows = "";
+    for (const [k, name, sub] of ROWS) {
+      const r = st[k] || { won: 0, lost: 0, quit: 0, best: null };
+      W += r.won; L += r.lost; Q += r.quit;
+      rows += `<tr><td>${name}<small>${sub}</small></td><td>${r.won}</td><td>${r.lost}</td><td>${r.quit}</td><td>${r.best != null ? fmt(r.best) : "–"}</td></tr>`;
+    }
+    const T = W + L + Q;
+    $("#stWon").textContent = W; $("#stLost").textContent = L; $("#stQuit").textContent = Q;
+    $("#statsSub").textContent = T + (T === 1 ? " partida" : " partidas");
+    $("#stRate").textContent = T ? Math.round(W / T * 100) + "%" : "–";
+    $("#stBar").innerHTML = T ? `<i style="width:${W/T*100}%;background:var(--coral)"></i><i style="width:${L/T*100}%;background:var(--purple)"></i><i style="width:${Q/T*100}%;background:var(--cream)"></i>` : "";
+    $("#stTable").innerHTML = rows;
+  }
 
   // ---------- Montagem do tabuleiro ----------
   function regionColors(N, reg) {
@@ -546,6 +649,7 @@ const ENGINE = (() => {
   }
 
   // ---------- Jogadas ----------
+  const over = () => S.won || S.lost;
   const snapshot = () => { S.hist.push({ b: S.board.slice(), n: S.notes.slice() }); if (S.hist.length > 200) S.hist.shift(); };
   const locked = i => S.puz[i] || (S.board[i] && S.board[i] === S.sol[i]);
   function place(i, d) {
@@ -554,23 +658,29 @@ const ENGINE = (() => {
   }
   function input(d) {
     const i = S.sel;
-    if (i < 0 || S.won || locked(i)) return;
+    if (i < 0 || over() || locked(i)) return;
     if (S.notesMode) { if (S.board[i]) return; snapshot(); S.notes[i] ^= 1 << d; }
     else {
       if (S.board[i] === d) return;
       snapshot(); place(i, d);
-      if (d !== S.sol[i]) { S.mistakes++; anim(i, "shake"); } else anim(i, "pop");
+      if (d !== S.sol[i]) {
+        S.mistakes++; anim(i, "shake");
+        if (S.mistakes >= MAX_ERR) {
+          S.lost = true; recordResult(S, "lost");
+          setTimeout(() => $("#lostDlg").classList.add("show"), 550);
+        }
+      } else anim(i, "pop");
     }
     after();
   }
   function erase() {
     const i = S.sel;
-    if (i < 0 || S.won || locked(i) || (!S.board[i] && !S.notes[i])) return;
+    if (i < 0 || over() || locked(i) || (!S.board[i] && !S.notes[i])) return;
     snapshot(); S.board[i] = 0; S.notes[i] = 0; after();
   }
-  function undo() { if (S.won || !S.hist.length) return; const h = S.hist.pop(); S.board = h.b; S.notes = h.n; after(); }
+  function undo() { if (over() || !S.hist.length) return; const h = S.hist.pop(); S.board = h.b; S.notes = h.n; after(); }
   function hint() {
-    if (S.won) return;
+    if (over()) return;
     let i = S.sel;
     if (i < 0 || S.board[i] === S.sol[i]) {
       const open = []; for (let k = 0; k < S.N * S.N; k++) if (S.board[k] !== S.sol[k]) open.push(k);
@@ -582,8 +692,9 @@ const ENGINE = (() => {
   function after() {
     if (S.board.every((v, k) => v === S.sol[k])) {
       S.won = true;
+      const rec = recordResult(S, "won");
       setTimeout(() => {
-        $("#winText").textContent = `${MODES[S.mode]}${S.mode === "classic" ? " " + LEVELS[S.level].toLowerCase() : ""} em ${fmt(S.time)}` +
+        $("#winText").textContent = (rec ? "🏆 Novo recorde! " : "") + `${MODES[S.mode]}${S.mode === "classic" ? " " + LEVELS[S.level].toLowerCase() : ""} em ${fmt(S.time)}` +
           ` · ${S.mistakes} erro${S.mistakes === 1 ? "" : "s"}` + (S.hints ? ` · ${S.hints} dica${S.hints === 1 ? "" : "s"}` : "");
         $("#winDlg").classList.add("show");
       }, 450);
@@ -621,33 +732,43 @@ const ENGINE = (() => {
     padEl.classList.toggle("notes-on", S.notesMode);
     $("#notesBtn").classList.toggle("on", S.notesMode);
     $("#notesBadge").textContent = S.notesMode ? "ON" : "OFF";
-    $("#mistakes").textContent = S.mistakes;
+    $("#mistakes").textContent = S.mistakes + "/" + MAX_ERR;
     $("#timer").textContent = fmt(S.time);
   }
 
   // ---------- Navegação ----------
   function showView(v) {
-    $("#home").classList.toggle("show", v === "home");
-    $("#game").classList.toggle("show", v === "game");
+    for (const id of ["home", "game", "stats"]) $("#" + id).classList.toggle("show", v === id);
     document.body.classList.toggle("on-home", v === "home");
+    document.body.classList.toggle("wide", v === "stats");
+    if (v === "stats") renderStats();
     if (v === "home") {
       const s = S || load();
-      const show = s && !s.won;
+      const show = s && !s.won && !s.lost;
       $("#continueBtn").hidden = !show;
       if (show) $("#continueText").textContent = `${MODES[s.mode]} · ${s.mode === "classic" ? LEVELS[s.level] + " · " : ""}${fmt(s.time)}`;
     }
     window.scrollTo(0, 0);
   }
   let pending = null;
-  function askStart(mode, level, title) {
-    const cur = S || load();
-    if (!inProgress(cur)) return startGame(mode, level);
-    pending = [mode, level];
-    $("#confirmTitle").textContent = title || "Novo jogo?";
-    $("#confirmText").textContent = "O jogo em andamento será perdido.";
+  function confirmBox(title, text, yes, fn) {
+    pending = fn;
+    $("#confirmTitle").textContent = title; $("#confirmText").textContent = text; $("#confirmYes").textContent = yes;
     $("#confirmDlg").classList.add("show");
   }
-  $("#confirmYes").onclick = () => { $("#confirmDlg").classList.remove("show"); if (pending) startGame(...pending); };
+  function askStart(mode, level) {
+    const cur = S || load();
+    if (!inProgress(cur)) return startGame(mode, level);
+    confirmBox("Novo jogo?", "O jogo em andamento será perdido e vai contar como desistência.", "Começar",
+      () => { recordResult(cur, "quit"); save(); startGame(mode, level); });
+  }
+  $("#confirmYes").onclick = () => { $("#confirmDlg").classList.remove("show"); if (pending) pending(); };
+  $("#statsBtn").onclick = () => showView("stats");
+  document.querySelectorAll("[data-home]").forEach(b => b.onclick = () => showView("home"));
+  $("#resetStats").onclick = () => confirmBox("Zerar estatísticas?", "Todas as vitórias, derrotas, desistências e recordes serão apagados.", "Zerar",
+    () => { saveStats({}); renderStats(); });
+  $("#lostAgain").onclick = () => { $("#lostDlg").classList.remove("show"); startGame(S.mode, S.level); };
+  $("#lostHome").onclick = () => { $("#lostDlg").classList.remove("show"); showView("home"); };
   document.querySelectorAll("[data-start]").forEach(b => b.onclick = () => { const [m, l] = b.dataset.start.split(":"); askStart(m, l); });
   $("#continueBtn").onclick = () => { if (!S) { S = load(); } if (S) { setupBoard(); showView("game"); } };
   $("#backBtn").onclick = () => { save(); showView("home"); };
@@ -681,7 +802,7 @@ const ENGINE = (() => {
   });
 
   setInterval(() => {
-    if (S && !S.won && !document.hidden && inGame()) {
+    if (S && !over() && !document.hidden && inGame()) {
       S.time++; $("#timer").textContent = fmt(S.time);
       if (S.time % 5 === 0) save();
     }
@@ -703,6 +824,11 @@ const ENGINE = (() => {
   } catch (e) {}
 
   showView("home");
+
+  // ---------- Funcionar sem internet ----------
+  if ("serviceWorker" in navigator && location.protocol === "https:" || location.hostname === "localhost") {
+    try { navigator.serviceWorker.register("sw.js").catch(() => {}); } catch (e) {}
+  }
 })();
 </script>
 </body>
