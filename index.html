@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Quadradinho">
+<meta name="theme-color" content="#7b1523">
+<link rel="apple-touch-icon" href="icone.png">
+<link rel="icon" id="favIcon" href="">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Silkscreen:wght@400;700&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet">
+<title>Quadradinho</title>
+<style>
+  :root{
+    --wine:#7b1523; --coral:#ff5b37; --cream:#f8df9f; --lilac:#dde2f4; --purple:#7c3d8f;
+    --cream-soft:#fdf2d2; --lilac-soft:#eef0fa;
+    --ink:#2a1a1d; --muted:#8a7d80; --card:#ffffff; --bad:#e0301e;
+    --chrome:310px; --k:1.12; --maxb:460px;
+    --board: min(calc(100vw - 48px), var(--maxb), calc((100vh - var(--chrome)) / var(--k)));
+  }
+  body.mode-mega{ --chrome:330px; --k:1.27; --maxb:560px; }
+  @supports (height: 100dvh){
+    :root, body.mode-mega{ --board: min(calc(100vw - 48px), var(--maxb), calc((100dvh - var(--chrome) - env(safe-area-inset-top) - env(safe-area-inset-bottom)) / var(--k))); }
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0}
+  body{
+    font-family:"Nunito", -apple-system, system-ui, sans-serif; color:var(--ink);
+    min-height:100vh; display:flex; justify-content:center; align-items:center;
+    padding: calc(env(safe-area-inset-top) + 12px) calc(env(safe-area-inset-right) + 8px) calc(env(safe-area-inset-bottom) + 12px) calc(env(safe-area-inset-left) + 8px);
+    background-color:var(--wine); background-size:var(--tile, 72px) var(--tile, 72px); background-attachment:fixed;
+    user-select:none; -webkit-user-select:none; touch-action:manipulation;
+  }
+  button{font-family:inherit}
+  .app{
+    width:calc(var(--board) + 32px); background:var(--card); border-radius:26px; padding:16px;
+    box-shadow:0 18px 50px rgba(60,10,20,.35), 0 2px 6px rgba(60,10,20,.15);
+  }
+  body.on-home .app{width:min(calc(100vw - 16px), 440px)}
+  .view{display:none; flex-direction:column; gap:14px}
+  .view.show{display:flex}
+
+  /* ---- Topo ---- */
+  .top{display:flex; align-items:center; gap:14px}
+  .avatar{
+    width:58px; height:58px; border-radius:50%; flex:none; background:var(--wine);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 0 0 2px #fff, 0 0 0 3.5px #d9d3d4;
+  }
+  .avatar svg{width:40px; height:40px}
+  .hero{flex:1; min-width:0}
+  h1, h2{font-family:"Silkscreen", "Courier New", monospace; font-weight:700; margin:0; color:var(--wine);
+    letter-spacing:.5px; line-height:1.05; text-transform:uppercase; text-shadow:2px 2px 0 var(--cream)}
+  h1{font-size:22px}
+  h2{font-size:17px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .sub{font-size:13px; color:var(--muted); margin-top:4px; font-weight:700}
+  .stats{display:flex; gap:16px; text-align:center}
+  .stat b{display:block; font-family:"Fredoka", sans-serif; font-weight:600; font-size:18px; color:var(--ink); font-variant-numeric:tabular-nums; line-height:1.1}
+  .stat span{font-size:11.5px; color:var(--muted); font-weight:700}
+  .iconbtn{background:none; border:0; color:var(--wine); padding:2px; cursor:pointer; display:flex}
+  .iconbtn svg{width:22px; height:22px}
+  .back{
+    width:42px; height:42px; flex:none; border-radius:50%; border:0; cursor:pointer; background:var(--lilac-soft); color:var(--wine);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .back svg{width:22px; height:22px}
+  .back:active{background:var(--lilac)}
+  .gtitle{flex:1; min-width:0}
+
+  /* ---- Página inicial ---- */
+  .continue{
+    display:flex; align-items:center; gap:12px; width:100%; border:0; cursor:pointer; text-align:left;
+    background:var(--wine); color:#fff; border-radius:18px; padding:12px 14px;
+  }
+  .continue[hidden]{display:none}
+  .continue .play{width:38px; height:38px; border-radius:50%; background:var(--coral); flex:none; display:flex; align-items:center; justify-content:center}
+  .continue .play svg{width:16px; height:16px; margin-left:2px}
+  .continue b{display:block; font-family:"Fredoka", sans-serif; font-weight:600; font-size:16px}
+  .continue span{font-size:12.5px; opacity:.8; font-weight:700}
+  .mode{
+    width:100%; border:1.5px solid #eee5e6; background:#fff; border-radius:20px; padding:14px;
+    display:flex; flex-direction:column; gap:12px; text-align:left; color:var(--ink);
+  }
+  .mode-btn{cursor:pointer}
+  .mode-btn:active{background:var(--lilac-soft)}
+  .mode-head{display:flex; align-items:center; gap:12px}
+  .mode-ico{
+    width:52px; height:52px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 0 0 2px #fff, 0 0 0 3.5px #d9d3d4;
+  }
+  .mode-ico svg{width:28px; height:28px}
+  .mode-ico.mega{font-family:"Silkscreen", monospace; font-weight:700; font-size:17px; color:var(--cream)}
+  .mode h3{margin:0; font-family:"Fredoka", sans-serif; font-weight:600; font-size:18px; color:var(--wine)}
+  .mode p{margin:2px 0 0; font-size:13px; color:var(--muted); font-weight:700; line-height:1.3}
+  .mode-head .chev{margin-left:auto; color:var(--wine); display:flex}
+  .mode-head .chev svg{width:20px; height:20px}
+  .lvls{display:grid; grid-template-columns:repeat(4,1fr); gap:6px}
+  .lvls button{border:0; border-radius:999px; padding:10px 0; cursor:pointer; font-family:"Fredoka", sans-serif; font-weight:600; font-size:14px}
+  .lvls button:active{transform:scale(.95)}
+  .lv-facil{background:var(--cream); color:var(--wine)}
+  .lv-medio{background:var(--lilac); color:var(--purple)}
+  .lv-dificil{background:var(--coral); color:#fff}
+  .lv-expert{background:var(--purple); color:#fff}
+
+  /* ---- Tabuleiro ---- */
+  #board{
+    width:var(--board); height:var(--board);
+    display:grid; grid-template-columns:repeat(var(--n),1fr); grid-template-rows:repeat(var(--n),1fr);
+    border:3px solid var(--wine); border-radius:14px; overflow:hidden; background:var(--card);
+  }
+  .cell{
+    position:relative; display:flex; align-items:center; justify-content:center;
+    border-right:1px solid rgba(123,21,35,.14); border-bottom:1px solid rgba(123,21,35,.14);
+    font-family:"Fredoka", sans-serif; font-size:calc(var(--board) / var(--n) * .55);
+    cursor:pointer; transition:box-shadow .12s, color .12s; background:var(--tint);
+  }
+  .cell.br{border-right:2px solid var(--wine)}
+  .cell.bb{border-bottom:2px solid var(--wine)}
+  .cell.nr{border-right:0}
+  .cell.nb{border-bottom:0}
+  .cell.peer{box-shadow:inset 0 0 0 999px rgba(124,61,143,.10)}
+  .cell.same{box-shadow:inset 0 0 0 999px rgba(124,61,143,.30)}
+  .cell.sel{box-shadow:inset 0 0 0 999px var(--coral); color:#fff !important}
+  .cell.given{font-weight:600; color:var(--wine)}
+  .cell.user{color:var(--purple); font-weight:500}
+  .cell.bad{color:var(--bad)}
+  .cell.bad.sel{box-shadow:inset 0 0 0 999px var(--wine); color:#ffc2b4 !important}
+  .cell.shake{animation:shake .3s}
+  .cell.pop{animation:pop .35s}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+  @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.2)}100%{transform:scale(1)}}
+  .notes{position:absolute; inset:1px; display:grid; grid-template-columns:repeat(var(--sq),1fr); grid-template-rows:repeat(var(--sq),1fr)}
+  .notes span{display:flex; align-items:center; justify-content:center; font-family:"Nunito", sans-serif; font-weight:800;
+    font-size:calc(var(--board) / var(--n) / var(--sq) * .7); color:var(--muted); line-height:1}
+  .notes span.hl{color:var(--coral)}
+  .cell.sel .notes span{color:rgba(255,255,255,.85)}
+
+  /* ---- Ferramentas ---- */
+  .tools{display:grid; grid-template-columns:repeat(4,1fr); border-top:1px solid #eee; border-bottom:1px solid #eee; padding:4px 0}
+  .tool{
+    background:none; border:0; color:var(--wine); cursor:pointer; display:flex; flex-direction:column;
+    align-items:center; gap:3px; font-size:12px; font-weight:700; padding:6px 0; border-radius:12px; position:relative;
+  }
+  .tool svg{width:23px; height:23px}
+  .tool:active{background:var(--lilac-soft)}
+  .tool .badge{position:absolute; top:1px; left:calc(50% + 8px); font-size:9px; font-weight:800; padding:2px 5px; border-radius:8px; background:#eee; color:var(--muted)}
+  .tool.on .badge{background:var(--coral); color:#fff}
+
+  /* ---- Números ---- */
+  .pad{display:grid; grid-template-columns:repeat(var(--cols),1fr); gap:calc(var(--board) / 90); row-gap:6px}
+  .num{background:none; border:0; padding:0; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px}
+  .num i{
+    width:100%; aspect-ratio:1; border-radius:50%; display:flex; align-items:center; justify-content:center; font-style:normal;
+    background:var(--c); color:var(--t); border:1.5px solid #d6d0d1; box-shadow:inset 0 0 0 2px #fff;
+    font-family:"Fredoka", sans-serif; font-weight:600; font-size:calc(var(--board) / var(--cols) * .46); transition:transform .1s;
+  }
+  .num:active i{transform:scale(.9)}
+  .num small{font-size:10.5px; color:var(--muted); font-weight:700}
+  .num.done{visibility:hidden}
+  .pad.notes-on .num i{border-style:dashed; border-color:var(--coral); font-size:calc(var(--board) / var(--cols) * .32)}
+
+  .newbtn{border:0; border-radius:999px; padding:13px; font-size:16px; font-weight:800; background:var(--wine); color:#fff; cursor:pointer}
+  .newbtn:active{background:var(--purple)}
+
+  /* ---- Diálogos ---- */
+  .overlay{position:fixed; inset:0; background:rgba(60,10,20,.45); display:none; align-items:center; justify-content:center; z-index:10; padding:20px}
+  .overlay.show{display:flex}
+  .dialog{background:var(--card); border-radius:24px; padding:24px 22px; width:min(340px, 100%); display:flex; flex-direction:column; gap:10px; text-align:center}
+  .dialog h2{font-size:20px; white-space:normal; margin-bottom:2px}
+  .dialog p{margin:0 0 6px; color:var(--muted); font-size:15px; line-height:1.4; font-weight:500}
+  .dialog button{border:0; border-radius:999px; padding:13px; font-size:16px; font-family:"Fredoka", sans-serif; font-weight:600; cursor:pointer; background:var(--lilac-soft); color:var(--wine)}
+  .dialog button.primary{background:var(--wine); color:#fff}
+  .dialog button.ghost{background:none; color:var(--muted); font-family:"Nunito", sans-serif; font-weight:700}
+  .dialog ol{text-align:left; margin:0 0 6px; padding-left:20px; color:var(--ink); font-size:15px; line-height:1.6}
+  .badge-big{width:72px; height:72px; border-radius:50%; background:var(--coral); margin:0 auto 6px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 3px #fff, 0 0 0 5px var(--cream)}
+  .badge-big svg{width:38px; height:38px}
+  .loader{display:grid; grid-template-columns:repeat(2,22px); gap:6px; margin:4px auto 8px}
+  .loader i{width:22px; height:22px; border-radius:5px; animation:blink 1s infinite}
+  .loader i:nth-child(1){background:var(--coral)} .loader i:nth-child(2){background:var(--cream); animation-delay:.25s}
+  .loader i:nth-child(3){background:var(--purple); animation-delay:.75s} .loader i:nth-child(4){background:var(--lilac); animation-delay:.5s}
+  @keyframes blink{0%,100%{transform:scale(1)}50%{transform:scale(.6)}}
+</style>
+</head>
+<body class="on-home">
+<div class="app">
+
+  <!-- =========== PÁGINA INICIAL =========== -->
+  <section class="view show" id="home">
+    <div class="top">
+      <div class="avatar">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="6.2" r="3.3" fill="#f8df9f"/><path d="M8.6 11.2h6.8l-1.6 1.6 1.4 6.4H8.8l1.4-6.4z" fill="#f8df9f"/><rect x="6.3" y="19.2" width="11.4" height="2.6" rx="1.2" fill="#f8df9f"/></svg>
+      </div>
+      <div class="hero">
+        <h1>Quadradinho</h1>
+        <div class="sub">Escolha seu jogo</div>
+      </div>
+      <button class="iconbtn" id="helpBtn" aria-label="Instalar no iPhone">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+      </button>
+    </div>
+
+    <button class="continue" id="continueBtn" hidden>
+      <span class="play"><svg viewBox="0 0 24 24" fill="#fff"><path d="M7 4.5v15l12.5-7.5z"/></svg></span>
+      <span style="opacity:1"><b>Continuar jogo</b><span id="continueText"></span></span>
+    </button>
+
+    <div class="mode">
+      <div class="mode-head">
+        <div class="mode-ico" style="background:var(--coral)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>
+        </div>
+        <div><h3>Tradicional</h3><p>O clássico 9×9 com quadrados 3×3</p></div>
+      </div>
+      <div class="lvls">
+        <button class="lv-facil" data-start="classic:facil">Fácil</button>
+        <button class="lv-medio" data-start="classic:medio">Médio</button>
+        <button class="lv-dificil" data-start="classic:dificil">Difícil</button>
+        <button class="lv-expert" data-start="classic:expert">Expert</button>
+      </div>
+    </div>
+
+    <button class="mode mode-btn" data-start="irregular:normal">
+      <div class="mode-head">
+        <div class="mode-ico" style="background:var(--purple)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 10h5v-4h5V3M13 6v5h4v4h4M8 10v5h5v6M13 15h4"/></svg>
+        </div>
+        <div><h3>Irregular</h3><p>9×9 com regiões de formatos diferentes</p></div>
+        <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></span>
+      </div>
+    </button>
+
+    <button class="mode mode-btn" data-start="mega:normal">
+      <div class="mode-head">
+        <div class="mode-ico mega" style="background:var(--wine)">16</div>
+        <div><h3>Mega Sudoku</h3><p>16×16 com números de 1 a 9 e letras de A a G</p></div>
+        <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></span>
+      </div>
+    </button>
+  </section>
+
+  <!-- =========== PÁGINA DO JOGO =========== -->
+  <section class="view" id="game">
+    <div class="top">
+      <button class="back" id="backBtn" aria-label="Voltar ao início">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg>
+      </button>
+      <div class="gtitle">
+        <h2 id="modeName">Tradicional</h2>
+        <div class="sub" id="modeSub">Nível fácil</div>
+      </div>
+      <div class="stats">
+        <div class="stat"><b id="timer">00:00</b><span>tempo</span></div>
+        <div class="stat"><b id="mistakes">0</b><span>erros</span></div>
+      </div>
+    </div>
+
+    <div id="board" role="grid" aria-label="Tabuleiro"></div>
+
+    <div class="tools">
+      <button class="tool" id="undoBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
+        Desfazer
+      </button>
+      <button class="tool" id="eraseBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H9L4 15a2 2 0 0 1 0-2.8L13.2 3a2 2 0 0 1 2.8 0l4 4a2 2 0 0 1 0 2.8L11 19"/><path d="m8 9 7 7"/></svg>
+        Apagar
+      </button>
+      <button class="tool" id="notesBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        Notas<span class="badge" id="notesBadge">OFF</span>
+      </button>
+      <button class="tool" id="hintBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2Z"/></svg>
+        Dica
+      </button>
+    </div>
+
+    <div class="pad" id="pad"></div>
+
+    <button class="newbtn" id="newBtn">Novo jogo</button>
+  </section>
+</div>
+
+<div class="overlay" id="loadDlg">
+  <div class="dialog">
+    <div class="loader"><i></i><i></i><i></i><i></i></div>
+    <p>Embaralhando os quadradinhos…</p>
+  </div>
+</div>
+
+<div class="overlay" id="confirmDlg">
+  <div class="dialog">
+    <h2 id="confirmTitle">Novo jogo?</h2>
+    <p id="confirmText"></p>
+    <button class="primary" id="confirmYes">Começar</button>
+    <button class="ghost" data-close>Cancelar</button>
+  </div>
+</div>
+
+<div class="overlay" id="winDlg">
+  <div class="dialog">
+    <div class="badge-big">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="6.2" r="3.3" fill="#fff"/><path d="M8.6 11.2h6.8l-1.6 1.6 1.4 6.4H8.8l1.4-6.4z" fill="#fff"/><rect x="6.3" y="19.2" width="11.4" height="2.6" rx="1.2" fill="#fff"/></svg>
+    </div>
+    <h2>Parabéns!</h2>
+    <p id="winText"></p>
+    <button class="primary" id="winAgain">Jogar de novo</button>
+    <button id="winHome">Voltar ao início</button>
+  </div>
+</div>
+
+<div class="overlay" id="helpDlg">
+  <div class="dialog">
+    <h2>Instalar no iPhone</h2>
+    <ol>
+      <li>Abra esta página no <b>Safari</b>.</li>
+      <li>Toque em <b>Compartilhar</b> (o quadrado com a seta).</li>
+      <li>Escolha <b>Adicionar à Tela de Início</b>.</li>
+    </ol>
+    <p>O Quadradinho aparece com ícone próprio e abre em tela cheia. Seu jogo fica salvo no aparelho.</p>
+    <button class="primary" data-close>Entendi</button>
+  </div>
+</div>
+
+<script>
+// ---------- Motor genérico de Sudoku (N×N com regiões) ----------
+const ENGINE = (() => {
+  const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const pop = m => { let c = 0; while (m) { m &= m - 1; c++; } return c; };
+
+  function geo(N, regions) {
+    const peers = [];
+    for (let i = 0; i < N * N; i++) {
+      const r = (i / N) | 0, c = i % N, a = [];
+      for (let j = 0; j < N * N; j++) {
+        if (j === i) continue;
+        if (((j / N) | 0) === r || j % N === c || regions[j] === regions[i]) a.push(j);
+      }
+      peers.push(a);
+    }
+    return { N, regions, peers, FULL: ((1 << (N + 1)) - 1) & ~1 };
+  }
+  function mask(G, g, i) { let u = 0; for (const p of G.peers[i]) if (g[p]) u |= 1 << g[p]; return G.FULL & ~u; }
+  function bits(m) { const r = []; for (let d = 1; m >> d; d++) if (m & (1 << d)) r.push(d); return r; }
+
+  // conta soluções até "limit"; com random=true deixa a 1ª solução gravada em g. -1 = orçamento esgotado
+  function search(G, g, limit, budget, random) {
+    if (--budget.n < 0) return -1;
+    let best = -1, bm = 0, bc = 99;
+    for (let i = 0; i < g.length; i++) if (!g[i]) {
+      const m = mask(G, g, i), c = pop(m);
+      if (!c) return 0;
+      if (c < bc) { bc = c; best = i; bm = m; if (c === 1) break; }
+    }
+    if (best < 0) return 1;
+    let n = 0; const ds = bits(bm); if (random) shuffle(ds);
+    for (const d of ds) {
+      g[best] = d;
+      const r = search(G, g, limit - n, budget, random);
+      if (r < 0) { g[best] = 0; return -1; }
+      n += r;
+      if (n >= limit) { if (random) return n; break; }
+    }
+    g[best] = 0; return n;
+  }
+
+  function boxRegions(N) {
+    const b = Math.sqrt(N);
+    return Array.from({ length: N * N }, (_, i) => ((((i / N) | 0) / b) | 0) * b + (((i % N) / b) | 0));
+  }
+
+  // regiões irregulares: parte das caixas e troca células de borda mantendo as regiões conectadas
+  function jigsaw(N) {
+    const reg = boxRegions(N);
+    const nb = i => { const r = (i / N) | 0, c = i % N, a = []; if (r) a.push(i - N); if (r < N - 1) a.push(i + N); if (c) a.push(i - 1); if (c < N - 1) a.push(i + 1); return a; };
+    const connected = id => {
+      let start = -1, total = 0;
+      for (let i = 0; i < N * N; i++) if (reg[i] === id) { total++; if (start < 0) start = i; }
+      const seen = new Set([start]), st = [start];
+      while (st.length) { const x = st.pop(); for (const y of nb(x)) if (reg[y] === id && !seen.has(y)) { seen.add(y); st.push(y); } }
+      return seen.size === total;
+    };
+    let swaps = 0, tries = 0;
+    while (swaps < N * 25 && tries < 30000) {
+      tries++;
+      const a = (Math.random() * N * N) | 0, A = reg[a];
+      const other = nb(a).filter(x => reg[x] !== A);
+      if (!other.length) continue;
+      const B = reg[other[(Math.random() * other.length) | 0]];
+      const cand = [];
+      for (let i = 0; i < N * N; i++) if (reg[i] === B && nb(i).some(x => reg[x] === A && x !== a)) cand.push(i);
+      if (!cand.length) continue;
+      const b = cand[(Math.random() * cand.length) | 0];
+      reg[a] = B; reg[b] = A;
+      if (connected(A) && connected(B)) swaps++; else { reg[a] = A; reg[b] = B; }
+    }
+    return reg;
+  }
+
+  // grade completa por padrão + embaralhamentos (rápido para 16×16)
+  function patternGrid(N) {
+    const b = Math.sqrt(N), rb = [...Array(b).keys()];
+    const rows = [], cols = [];
+    for (const band of shuffle(rb.slice())) for (const r of shuffle(rb.slice())) rows.push(band * b + r);
+    for (const st of shuffle(rb.slice())) for (const c of shuffle(rb.slice())) cols.push(st * b + c);
+    const nums = shuffle([...Array(N).keys()].map(x => x + 1));
+    const g = new Array(N * N);
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+      const rr = rows[r], cc = cols[c];
+      g[r * N + c] = nums[(b * (rr % b) + ((rr / b) | 0) + cc) % N];
+    }
+    return g;
+  }
+
+  const TARGET = {
+    classic: { facil: 40, medio: 32, dificil: 27, expert: 23 },
+    irregular: { normal: 28 },
+    mega: { normal: 112 }
+  };
+
+  function generate(mode, level) {
+    const N = mode === "mega" ? 16 : 9;
+    for (;;) {
+      const regions = mode === "irregular" ? jigsaw(9) : boxRegions(N);
+      const G = geo(N, regions);
+      let sol;
+      if (mode === "mega") sol = patternGrid(16);
+      else { sol = new Array(N * N).fill(0); if (search(G, sol, 1, { n: 60000 }, true) !== 1) continue; }
+      const puz = sol.slice(), target = TARGET[mode][level];
+      let givens = N * N;
+      for (const i of shuffle([...Array(N * N).keys()])) {
+        if (givens <= target) break;
+        const v = puz[i]; puz[i] = 0;
+        if (search(G, puz.slice(), 2, { n: N === 16 ? 4000 : 30000 }, false) !== 1) puz[i] = v; else givens--;
+      }
+      return { N, regions, puz, sol };
+    }
+  }
+
+  return { generate, geo, search, TARGET };
+})();
+
+
+(() => {
+  const $ = s => document.querySelector(s);
+  const KEY = "quadradinho-save-v2";
+  const PAL = { wine:"#7b1523", coral:"#ff5b37", cream:"#f8df9f", lilac:"#dde2f4", purple:"#7c3d8f" };
+  const TINTS = ["#fdf2d2", "#eef0fa", "#ffe7df", "#f3e6f5", "#f8e3e5"];
+  const MODES = { classic:"Tradicional", irregular:"Irregular", mega:"Mega Sudoku" };
+  const LEVELS = { facil:"Fácil", medio:"Médio", dificil:"Difícil", expert:"Expert" };
+  const sym = v => v <= 9 ? String(v) : String.fromCharCode(55 + v);
+  const subtitle = s => s.mode === "classic" ? "Nível " + LEVELS[s.level].toLowerCase() : s.mode === "mega" ? "16×16" : "Regiões irregulares";
+
+  // ---------- Fundo em mosaico ----------
+  (function mosaic(){
+    const n = 12, s = 10, cols = Object.values(PAL);
+    let rects = "", prev = [];
+    for (let y = 0; y < n; y++) {
+      const row = [];
+      for (let x = 0; x < n; x++) {
+        let c; do { c = cols[(Math.random() * cols.length) | 0]; } while (c === row[x - 1] || c === prev[x]);
+        row.push(c); rects += `<rect x="${x*s}" y="${y*s}" width="${s}" height="${s}" fill="${c}"/>`;
+      }
+      prev = row;
+    }
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${n*s}" height="${n*s}" shape-rendering="crispEdges">${rects}</svg>`;
+    document.body.style.backgroundImage = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+    document.body.style.setProperty("--tile", (n * 52) + "px");
+  })();
+
+  // ---------- Estado ----------
+  let S = null, G = null;
+  const cells = [], pads = [];
+  const boardEl = $("#board"), padEl = $("#pad");
+
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+  function load() {
+    try {
+      const s = JSON.parse(localStorage.getItem(KEY));
+      if (s && s.board && s.regions && s.board.length === s.N * s.N && MODES[s.mode]) return s;
+    } catch (e) {}
+    return null;
+  }
+
+  function startGame(mode, level) {
+    $("#loadDlg").classList.add("show");
+    setTimeout(() => {
+      const { N, regions, puz, sol } = ENGINE.generate(mode, level);
+      S = { mode, level, N, regions, puz, sol, board: puz.slice(), notes: new Array(N * N).fill(0),
+            mistakes: 0, time: 0, hist: [], sel: -1, notesMode: false, won: false, hints: 0 };
+      save(); setupBoard(); showView("game");
+      $("#loadDlg").classList.remove("show");
+    }, 60);
+  }
+  const inProgress = s => s && !s.won && s.board.some((v, k) => v !== s.puz[k] || s.notes[k]);
+
+  // ---------- Montagem do tabuleiro ----------
+  function regionColors(N, reg) {
+    const adj = {}, color = {};
+    for (let i = 0; i < N * N; i++) {
+      const r = (i / N) | 0, c = i % N;
+      for (const j of [c < N - 1 ? i + 1 : -1, r < N - 1 ? i + N : -1]) if (j >= 0 && reg[j] !== reg[i]) {
+        (adj[reg[i]] = adj[reg[i]] || new Set()).add(reg[j]); (adj[reg[j]] = adj[reg[j]] || new Set()).add(reg[i]);
+      }
+    }
+    for (let id = 0; id < N; id++) {
+      const used = new Set([...(adj[id] || [])].map(x => color[x]));
+      let k = 0; while (used.has(k)) k++; color[id] = k % TINTS.length;
+    }
+    return color;
+  }
+  function setupBoard() {
+    const N = S.N, reg = S.regions, sq = Math.sqrt(N);
+    G = ENGINE.geo(N, reg);
+    document.body.classList.toggle("mode-mega", N === 16);
+    boardEl.style.setProperty("--n", N); boardEl.style.setProperty("--sq", sq);
+    const col = regionColors(N, reg);
+    boardEl.innerHTML = ""; cells.length = 0;
+    for (let i = 0; i < N * N; i++) {
+      const el = document.createElement("div"), r = (i / N) | 0, c = i % N;
+      el.className = "cell";
+      el.style.setProperty("--tint", TINTS[col[reg[i]]]);
+      if (c === N - 1) el.classList.add("nr"); else if (reg[i + 1] !== reg[i]) el.classList.add("br");
+      if (r === N - 1) el.classList.add("nb"); else if (reg[i + N] !== reg[i]) el.classList.add("bb");
+      el.addEventListener("pointerdown", e => { e.preventDefault(); S.sel = i; render(); });
+      boardEl.appendChild(el); cells.push(el);
+    }
+    const cols = N === 16 ? 8 : 9;
+    padEl.style.setProperty("--cols", cols);
+    padEl.innerHTML = ""; pads.length = 0;
+    const PC = [[PAL.coral,"#fff"],[PAL.cream,PAL.wine],[PAL.purple,"#fff"],[PAL.lilac,PAL.purple],[PAL.wine,PAL.cream]];
+    for (let d = 1; d <= N; d++) {
+      const b = document.createElement("button"), [bg, fg] = PC[(d - 1) % 5];
+      b.className = "num"; b.style.setProperty("--c", bg); b.style.setProperty("--t", fg);
+      b.innerHTML = `<i>${sym(d)}</i><small></small>`;
+      b.addEventListener("click", () => input(d));
+      padEl.appendChild(b); pads.push(b);
+    }
+    $("#modeName").textContent = MODES[S.mode];
+    $("#modeSub").textContent = subtitle(S);
+    render();
+  }
+
+  // ---------- Jogadas ----------
+  const snapshot = () => { S.hist.push({ b: S.board.slice(), n: S.notes.slice() }); if (S.hist.length > 200) S.hist.shift(); };
+  const locked = i => S.puz[i] || (S.board[i] && S.board[i] === S.sol[i]);
+  function place(i, d) {
+    S.board[i] = d; S.notes[i] = 0;
+    if (d === S.sol[i]) for (const p of G.peers[i]) S.notes[p] &= ~(1 << d);
+  }
+  function input(d) {
+    const i = S.sel;
+    if (i < 0 || S.won || locked(i)) return;
+    if (S.notesMode) { if (S.board[i]) return; snapshot(); S.notes[i] ^= 1 << d; }
+    else {
+      if (S.board[i] === d) return;
+      snapshot(); place(i, d);
+      if (d !== S.sol[i]) { S.mistakes++; anim(i, "shake"); } else anim(i, "pop");
+    }
+    after();
+  }
+  function erase() {
+    const i = S.sel;
+    if (i < 0 || S.won || locked(i) || (!S.board[i] && !S.notes[i])) return;
+    snapshot(); S.board[i] = 0; S.notes[i] = 0; after();
+  }
+  function undo() { if (S.won || !S.hist.length) return; const h = S.hist.pop(); S.board = h.b; S.notes = h.n; after(); }
+  function hint() {
+    if (S.won) return;
+    let i = S.sel;
+    if (i < 0 || S.board[i] === S.sol[i]) {
+      const open = []; for (let k = 0; k < S.N * S.N; k++) if (S.board[k] !== S.sol[k]) open.push(k);
+      if (!open.length) return;
+      i = open[(Math.random() * open.length) | 0];
+    }
+    snapshot(); place(i, S.sol[i]); S.hints++; S.sel = i; anim(i, "pop"); after();
+  }
+  function after() {
+    if (S.board.every((v, k) => v === S.sol[k])) {
+      S.won = true;
+      setTimeout(() => {
+        $("#winText").textContent = `${MODES[S.mode]}${S.mode === "classic" ? " " + LEVELS[S.level].toLowerCase() : ""} em ${fmt(S.time)}` +
+          ` · ${S.mistakes} erro${S.mistakes === 1 ? "" : "s"}` + (S.hints ? ` · ${S.hints} dica${S.hints === 1 ? "" : "s"}` : "");
+        $("#winDlg").classList.add("show");
+      }, 450);
+    }
+    save(); render();
+  }
+  function anim(i, cls) { const el = cells[i]; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); setTimeout(() => el.classList.remove(cls), 400); }
+  const fmt = t => { const h = (t / 3600) | 0, m = ((t % 3600) / 60) | 0, s = t % 60;
+    return (h ? h + ":" : "") + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0"); };
+
+  function render() {
+    const N = S.N, sel = S.sel, sv = sel >= 0 ? S.board[sel] : 0, reg = S.regions;
+    for (let i = 0; i < N * N; i++) {
+      const el = cells[i], v = S.board[i];
+      el.classList.toggle("sel", i === sel);
+      el.classList.toggle("peer", sel >= 0 && i !== sel && (((i / N) | 0) === ((sel / N) | 0) || i % N === sel % N || reg[i] === reg[sel]));
+      el.classList.toggle("same", !!sv && i !== sel && v === sv);
+      el.classList.toggle("given", !!S.puz[i]);
+      el.classList.toggle("user", !S.puz[i] && !!v);
+      el.classList.toggle("bad", !!v && v !== S.sol[i]);
+      let html = "";
+      if (v) html = sym(v);
+      else if (S.notes[i]) {
+        html = '<div class="notes">';
+        for (let d = 1; d <= N; d++) html += `<span${d === sv ? ' class="hl"' : ""}>${S.notes[i] & (1 << d) ? sym(d) : ""}</span>`;
+        html += "</div>";
+      }
+      if (el._h !== html) { el.innerHTML = html; el._h = html; }
+    }
+    for (let d = 1; d <= N; d++) {
+      let n = 0; for (let k = 0; k < N * N; k++) if (S.board[k] === d && S.sol[k] === d) n++;
+      pads[d - 1].classList.toggle("done", n >= N);
+      pads[d - 1].querySelector("small").textContent = N - n;
+    }
+    padEl.classList.toggle("notes-on", S.notesMode);
+    $("#notesBtn").classList.toggle("on", S.notesMode);
+    $("#notesBadge").textContent = S.notesMode ? "ON" : "OFF";
+    $("#mistakes").textContent = S.mistakes;
+    $("#timer").textContent = fmt(S.time);
+  }
+
+  // ---------- Navegação ----------
+  function showView(v) {
+    $("#home").classList.toggle("show", v === "home");
+    $("#game").classList.toggle("show", v === "game");
+    document.body.classList.toggle("on-home", v === "home");
+    if (v === "home") {
+      const s = S || load();
+      const show = s && !s.won;
+      $("#continueBtn").hidden = !show;
+      if (show) $("#continueText").textContent = `${MODES[s.mode]} · ${s.mode === "classic" ? LEVELS[s.level] + " · " : ""}${fmt(s.time)}`;
+    }
+    window.scrollTo(0, 0);
+  }
+  let pending = null;
+  function askStart(mode, level, title) {
+    const cur = S || load();
+    if (!inProgress(cur)) return startGame(mode, level);
+    pending = [mode, level];
+    $("#confirmTitle").textContent = title || "Novo jogo?";
+    $("#confirmText").textContent = "O jogo em andamento será perdido.";
+    $("#confirmDlg").classList.add("show");
+  }
+  $("#confirmYes").onclick = () => { $("#confirmDlg").classList.remove("show"); if (pending) startGame(...pending); };
+  document.querySelectorAll("[data-start]").forEach(b => b.onclick = () => { const [m, l] = b.dataset.start.split(":"); askStart(m, l); });
+  $("#continueBtn").onclick = () => { if (!S) { S = load(); } if (S) { setupBoard(); showView("game"); } };
+  $("#backBtn").onclick = () => { save(); showView("home"); };
+  $("#newBtn").onclick = () => askStart(S.mode, S.level);
+  $("#winAgain").onclick = () => { $("#winDlg").classList.remove("show"); startGame(S.mode, S.level); };
+  $("#winHome").onclick = () => { $("#winDlg").classList.remove("show"); showView("home"); };
+  $("#helpBtn").onclick = () => $("#helpDlg").classList.add("show");
+  $("#undoBtn").onclick = undo; $("#eraseBtn").onclick = erase; $("#hintBtn").onclick = hint;
+  $("#notesBtn").onclick = () => { S.notesMode = !S.notesMode; save(); render(); };
+  document.querySelectorAll("[data-close]").forEach(b => b.onclick = () => b.closest(".overlay").classList.remove("show"));
+  document.querySelectorAll(".overlay").forEach(o => o.addEventListener("click", e => {
+    if (e.target === o && (o.id === "helpDlg" || o.id === "confirmDlg")) o.classList.remove("show");
+  }));
+
+  const inGame = () => $("#game").classList.contains("show") && !document.querySelector(".overlay.show");
+  document.addEventListener("keydown", e => {
+    if (!inGame() || !S) return;
+    const N = S.N, k = e.key.toLowerCase();
+    if ((e.metaKey || e.ctrlKey) && k === "z") { e.preventDefault(); return undo(); }
+    if (/^[1-9]$/.test(k)) return input(+k);
+    if (N === 16 && /^[a-g]$/.test(k)) return input(k.charCodeAt(0) - 87);
+    if (k === "backspace" || k === "delete" || k === "0") return erase();
+    if (k === "n") { S.notesMode = !S.notesMode; save(); return render(); }
+    const mv = { arrowup: [-1, 0], arrowdown: [1, 0], arrowleft: [0, -1], arrowright: [0, 1] }[k];
+    if (mv) {
+      e.preventDefault();
+      if (S.sel < 0) S.sel = 0;
+      else { const r = (S.sel / N) | 0, c = S.sel % N; S.sel = ((r + mv[0] + N) % N) * N + (c + mv[1] + N) % N; }
+      render();
+    }
+  });
+
+  setInterval(() => {
+    if (S && !S.won && !document.hidden && inGame()) {
+      S.time++; $("#timer").textContent = fmt(S.time);
+      if (S.time % 5 === 0) save();
+    }
+  }, 1000);
+  document.addEventListener("visibilitychange", () => { if (document.hidden && S) save(); });
+
+  // ---------- Ícone ----------
+  try {
+    const cv = document.createElement("canvas"); cv.width = cv.height = 180;
+    const g = cv.getContext("2d"), cols = [PAL.coral, PAL.cream, PAL.lilac, PAL.purple, PAL.wine];
+    for (let r = 0; r < 6; r++) for (let c = 0; c < 6; c++) { g.fillStyle = cols[(r * 2 + c * 3) % 5]; g.fillRect(c * 30, r * 30, 30, 30); }
+    g.fillStyle = "#fff"; g.beginPath(); g.roundRect ? g.roundRect(28, 28, 124, 124, 22) : g.rect(28, 28, 124, 124); g.fill();
+    g.strokeStyle = PAL.wine; g.lineWidth = 3;
+    for (const p of [69, 110]) { g.beginPath(); g.moveTo(p, 40); g.lineTo(p, 140); g.moveTo(40, p); g.lineTo(140, p); g.stroke(); }
+    g.font = "700 30px Fredoka, -apple-system, system-ui, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
+    [[49, 49, "5", PAL.wine], [131, 49, "3", PAL.purple], [90, 90, "7", PAL.coral], [49, 131, "9", PAL.purple], [131, 131, "1", PAL.wine]]
+      .forEach(([a, b, t, c]) => { g.fillStyle = c; g.fillText(t, a, b + 1); });
+    const url = cv.toDataURL("image/png"); $("#favIcon").href = url;
+  } catch (e) {}
+
+  showView("home");
+})();
+</script>
+</body>
+</html>
