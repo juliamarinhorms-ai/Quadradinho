@@ -1,5 +1,5 @@
 // Quadradinho — guarda o jogo no aparelho para funcionar sem internet
-const CACHE = "quadradinho-v2";
+const CACHE = "quadradinho-v3";
 const FILES = ["./", "./index.html", "./icone.png", "./manifest.webmanifest"];
 
 self.addEventListener("install", e => {

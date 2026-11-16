@@ -37,6 +37,7 @@
     user-select:none; -webkit-user-select:none; touch-action:manipulation;
   }
   button{font-family:inherit}
+  button:focus:not(:focus-visible){outline:none}
   .app{
     width:calc(var(--board) + 32px); background:var(--card); border-radius:26px; padding:16px;
     box-shadow:0 18px 50px rgba(60,10,20,.35), 0 2px 6px rgba(60,10,20,.15);
@@ -143,6 +144,41 @@
   table.st td:first-child{font-family:"Nunito", sans-serif; font-weight:700; color:var(--ink)}
   table.st td small{display:block; font-size:11px; color:var(--muted); font-weight:700}
   .resetbtn{background:none; border:0; color:var(--muted); font-weight:700; font-size:13px; cursor:pointer; padding:4px; text-decoration:underline}
+
+  /* ---- Anagrama ---- */
+  .lvls.lv3{grid-template-columns:repeat(3,1fr)}
+  .mode-ico.ana{font-family:"Silkscreen", monospace; font-weight:700; font-size:14px; color:var(--wine)}
+  .ana-prog{display:grid; grid-template-columns:repeat(10,1fr); gap:5px}
+  .ana-prog i{height:10px; border-radius:4px; background:var(--lilac-soft)}
+  .ana-prog i.ok{background:var(--coral)}
+  .ana-prog i.skip{background:var(--purple)}
+  .ana-prog i.cur{background:var(--wine)}
+  .ana-cat{text-align:center; margin-top:4px}
+  .ana-cat span{display:inline-block; background:var(--cream); color:var(--wine); font-weight:800; font-size:14px; padding:7px 16px; border-radius:999px}
+  .slots{display:flex; justify-content:center; gap:6px; margin-top:6px}
+  .slot{
+    width:var(--s); height:calc(var(--s) * 1.18); border-radius:10px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--lilac-soft); border:2px solid #e2dcdd;
+    font-family:"Fredoka", sans-serif; font-weight:600; font-size:calc(var(--s) * .58); color:var(--wine);
+    transition:background .15s, border-color .15s, color .15s;
+  }
+  .slot.filled{background:#fff; border-color:var(--wine)}
+  .slot.locked{background:var(--lilac); border-color:var(--purple); color:var(--purple)}
+  .slots.ok .slot{background:var(--coral); border-color:var(--coral); color:#fff}
+  .slots.reveal .slot{background:var(--purple); border-color:var(--purple); color:#fff}
+  .slots.shake{animation:shake .35s}
+  .slot.pop{animation:pop .35s}
+  .ana-msg{min-height:24px; text-align:center; font-family:"Fredoka", sans-serif; font-weight:600; font-size:18px; color:var(--coral)}
+  .ana-msg.bad{color:var(--wine)}
+  .tiles{display:flex; flex-wrap:wrap; justify-content:center; gap:9px; min-height:120px; align-content:flex-start; padding:4px 0 8px}
+  .tile{
+    width:var(--ts, 54px); height:var(--ts, 54px); border-radius:13px; border:0; cursor:pointer; background:var(--c); color:var(--t);
+    font-family:"Fredoka", sans-serif; font-weight:600; font-size:calc(var(--ts, 54px) * .5); box-shadow:0 4px 0 rgba(60,10,20,.18);
+    transition:transform .08s;
+  }
+  .tile:active{transform:translateY(3px); box-shadow:0 1px 0 rgba(60,10,20,.18)}
+  .tile.used{visibility:hidden}
 
   /* ---- Tabuleiro ---- */
   #board{
@@ -284,6 +320,18 @@
       </div>
     </button>
 
+    <div class="mode">
+      <div class="mode-head">
+        <div class="mode-ico ana" style="background:var(--cream)">ABC</div>
+        <div><h3>Anagrama</h3><p>Desembaralhe as letras e descubra a palavra</p></div>
+      </div>
+      <div class="lvls lv3">
+        <button class="lv-facil" data-start="anagram:facil">Fácil</button>
+        <button class="lv-medio" data-start="anagram:medio">Médio</button>
+        <button class="lv-dificil" data-start="anagram:dificil">Difícil</button>
+      </div>
+    </div>
+
     <button class="statsbtn" id="statsBtn">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 20V12M12 20V5M19 20v-9"/></svg>
       Minhas estatísticas
@@ -312,6 +360,43 @@
       <tbody id="stTable"></tbody>
     </table>
     <button class="resetbtn" id="resetStats">Zerar estatísticas</button>
+  </section>
+
+  <!-- =========== ANAGRAMA =========== -->
+  <section class="view" id="ana">
+    <div class="top">
+      <button class="back" id="anaBack" aria-label="Voltar ao início">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg>
+      </button>
+      <div class="gtitle"><h2>Anagrama</h2><div class="sub" id="anaSub">Nível fácil</div></div>
+      <div class="stats">
+        <div class="stat"><b id="anaTimer">00:00</b><span>tempo</span></div>
+        <div class="stat"><b id="anaErr">0/3</b><span>erros</span></div>
+      </div>
+    </div>
+    <div class="ana-prog" id="anaProg"></div>
+    <div class="ana-cat"><span id="anaCat">Dica: Fruta</span></div>
+    <div class="slots" id="slots"></div>
+    <div class="ana-msg" id="anaMsg"></div>
+    <div class="tiles" id="tiles"></div>
+    <div class="tools">
+      <button class="tool" id="anaShuffle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="m15 15 6 6"/><path d="M4 4l5 5"/></svg>
+        Embaralhar
+      </button>
+      <button class="tool" id="anaClear">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H9L4 15a2 2 0 0 1 0-2.8L13.2 3a2 2 0 0 1 2.8 0l4 4a2 2 0 0 1 0 2.8L11 19"/><path d="m8 9 7 7"/></svg>
+        Limpar
+      </button>
+      <button class="tool" id="anaHint">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2Z"/></svg>
+        Dica<span class="badge" id="anaHintBadge">3</span>
+      </button>
+      <button class="tool" id="anaSkip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 4 10 8-10 8V4z"/><path d="M19 5v14"/></svg>
+        Pular
+      </button>
+    </div>
   </section>
 
   <!-- =========== PÁGINA DO JOGO =========== -->
@@ -534,7 +619,7 @@ const ENGINE = (() => {
   const KEY = "quadradinho-save-v2", STATS_KEY = "quadradinho-stats-v1", MAX_ERR = 3;
   const PAL = { wine:"#7b1523", coral:"#ff5b37", cream:"#f8df9f", lilac:"#dde2f4", purple:"#7c3d8f" };
   const TINTS = ["#fdf2d2", "#eef0fa", "#ffe7df", "#f3e6f5", "#f8e3e5"];
-  const MODES = { classic:"Tradicional", irregular:"Irregular", mega:"Mega Sudoku" };
+  const MODES = { classic:"Tradicional", irregular:"Irregular", mega:"Mega Sudoku", anagram:"Anagrama" };
   const LEVELS = { facil:"Fácil", medio:"Médio", dificil:"Difícil", expert:"Expert" };
   const sym = v => v <= 9 ? String(v) : String.fromCharCode(55 + v);
   const subtitle = s => s.mode === "classic" ? "Nível " + LEVELS[s.level].toLowerCase() : s.mode === "mega" ? "16×16" : "Regiões irregulares";
@@ -565,12 +650,14 @@ const ENGINE = (() => {
   function load() {
     try {
       const s = JSON.parse(localStorage.getItem(KEY));
-      if (s && s.board && s.regions && s.board.length === s.N * s.N && MODES[s.mode]) return s;
+      if (s && MODES[s.mode] && (s.mode === "anagram" ? Array.isArray(s.words) && s.words.length
+          : (s.board && s.regions && s.board.length === s.N * s.N))) return s;
     } catch (e) {}
     return null;
   }
 
   function startGame(mode, level) {
+    if (mode === "anagram") { S = newAna(level); save(); showView("ana"); setupAna(); return; }
     $("#loadDlg").classList.add("show");
     setTimeout(() => {
       const { N, regions, puz, sol } = ENGINE.generate(mode, level);
@@ -580,12 +667,15 @@ const ENGINE = (() => {
       $("#loadDlg").classList.remove("show");
     }, 60);
   }
-  const inProgress = s => s && !s.won && !s.lost && s.board.some((v, k) => v !== s.puz[k] || s.notes[k]);
+  const inProgress = s => s && !s.won && !s.lost && (s.mode === "anagram"
+    ? (s.idx > 0 || s.slots.some(v => v != null))
+    : s.board.some((v, k) => v !== s.puz[k] || s.notes[k]));
 
   // ---------- Estatísticas ----------
   const ROWS = [["classic-facil","Tradicional","Fácil"],["classic-medio","Tradicional","Médio"],["classic-dificil","Tradicional","Difícil"],
-                ["classic-expert","Tradicional","Expert"],["irregular","Irregular","9×9"],["mega","Mega Sudoku","16×16"]];
-  const statKey = s => s.mode === "classic" ? "classic-" + s.level : s.mode;
+                ["classic-expert","Tradicional","Expert"],["irregular","Irregular","9×9"],["mega","Mega Sudoku","16×16"],
+                ["anagram-facil","Anagrama","Fácil"],["anagram-medio","Anagrama","Médio"],["anagram-dificil","Anagrama","Difícil"]];
+  const statKey = s => (s.mode === "classic" || s.mode === "anagram") ? s.mode + "-" + s.level : s.mode;
   function loadStats() { try { return JSON.parse(localStorage.getItem(STATS_KEY)) || {}; } catch (e) { return {}; } }
   function saveStats(st) { try { localStorage.setItem(STATS_KEY, JSON.stringify(st)); } catch (e) {} }
   function recordResult(s, kind) {
@@ -751,15 +841,15 @@ const ENGINE = (() => {
 
   // ---------- Navegação ----------
   function showView(v) {
-    for (const id of ["home", "game", "stats"]) $("#" + id).classList.toggle("show", v === id);
+    for (const id of ["home", "game", "stats", "ana"]) $("#" + id).classList.toggle("show", v === id);
     document.body.classList.toggle("on-home", v === "home");
-    document.body.classList.toggle("wide", v === "stats");
+    document.body.classList.toggle("wide", v === "stats" || v === "ana");
     if (v === "stats") renderStats();
     if (v === "home") {
       const s = S || load();
       const show = s && !s.won && !s.lost;
       $("#continueBtn").hidden = !show;
-      if (show) $("#continueText").textContent = `${MODES[s.mode]} · ${s.mode === "classic" ? LEVELS[s.level] + " · " : ""}${fmt(s.time)}`;
+      if (show) $("#continueText").textContent = `${MODES[s.mode]} · ${(s.mode === "classic" || s.mode === "anagram") ? LEVELS[s.level] + " · " : ""}${fmt(s.time)}`;
     }
     window.scrollTo(0, 0);
   }
@@ -790,7 +880,11 @@ const ENGINE = (() => {
     confirmBox("Descartar jogo?", "A partida em andamento será apagada e vai contar como desistência.", "Descartar",
       () => { recordResult(cur, "quit"); drop(); });
   };
-  $("#continueMain").onclick = () => { if (!S) { S = load(); } if (S) { setupBoard(); showView("game"); } };
+  $("#continueMain").onclick = () => {
+    if (!S) S = load();
+    if (!S) return;
+    if (S.mode === "anagram") { showView("ana"); setupAna(); } else { setupBoard(); showView("game"); }
+  };
   $("#backBtn").onclick = () => { save(); showView("home"); };
   $("#newBtn").onclick = () => askStart(S.mode, S.level);
   $("#winAgain").onclick = () => { $("#winDlg").classList.remove("show"); startGame(S.mode, S.level); };
@@ -804,6 +898,7 @@ const ENGINE = (() => {
   }));
 
   const inGame = () => $("#game").classList.contains("show") && !document.querySelector(".overlay.show");
+  const inAna = () => $("#ana").classList.contains("show") && !document.querySelector(".overlay.show");
   document.addEventListener("keydown", e => {
     if (!inGame() || !S) return;
     const N = S.N, k = e.key.toLowerCase();
@@ -822,12 +917,185 @@ const ENGINE = (() => {
   });
 
   setInterval(() => {
-    if (S && !over() && !document.hidden && inGame()) {
-      S.time++; $("#timer").textContent = fmt(S.time);
+    if (S && !over() && !document.hidden && (inGame() || inAna())) {
+      S.time++; $(S.mode === "anagram" ? "#anaTimer" : "#timer").textContent = fmt(S.time);
       if (S.time % 5 === 0) save();
     }
   }, 1000);
   document.addEventListener("visibilitychange", () => { if (document.hidden && S) save(); });
+
+  // ---------- Anagrama ----------
+  const WORDS = {
+    facil: "Fruta:Pera,Manga,Lima,Caqui,Coco,Figo,Amora,Melão,Jaca,Caju,Mamão,Limão|" +
+      "Animal:Gato,Pato,Sapo,Lobo,Urso,Leão,Zebra,Tigre,Cobra,Cabra,Peixe,Porco,Vaca,Rato,Pombo|" +
+      "Casa:Mesa,Sofá,Cama,Porta,Prato,Copo,Faca,Garfo,Vaso,Telha,Forno|" +
+      "Cor:Azul,Roxo,Rosa,Verde,Preto,Cinza|" +
+      "Corpo:Boca,Olho,Nariz,Perna,Dedo,Braço,Dente|" +
+      "Natureza:Nuvem,Chuva,Praia,Flor,Vento,Neve,Pedra,Areia,Folha,Lago|" +
+      "Comida:Bolo,Pudim,Pizza,Arroz,Sopa,Milho,Doce",
+    medio: "Fruta:Banana,Laranja,Morango,Abacaxi,Goiaba,Cereja,Ameixa,Pêssego,Pitanga,Acerola|" +
+      "Animal:Girafa,Cavalo,Macaco,Coelho,Galinha,Coruja,Baleia,Tubarão,Canguru,Pinguim,Esquilo,Formiga,Jacaré,Minhoca,Aranha,Abelha|" +
+      "Casa:Cadeira,Janela,Espelho,Tapete,Cortina,Panela,Gaveta,Toalha,Armário,Escada,Estante,Tesoura|" +
+      "Esporte:Futebol,Xadrez,Natação,Corrida|" +
+      "Profissão:Médico,Padeiro,Pintor,Cantor,Piloto,Garçom|" +
+      "Natureza:Estrela,Planeta,Oceano,Deserto,Vulcão,Cascata,Árvore|" +
+      "Música:Violão,Tambor,Flauta,Sanfona,Teclado|" +
+      "Comida:Pipoca,Sorvete,Pastel,Coxinha,Tapioca,Salada,Lasanha",
+    dificil: "Fruta:Melancia,Maracujá,Jabuticaba,Framboesa,Tangerina,Carambola|" +
+      "Animal:Tartaruga,Borboleta,Elefante,Crocodilo,Hipopótamo,Papagaio,Camaleão,Golfinho,Cachorro,Caranguejo,Gafanhoto|" +
+      "Casa:Geladeira,Ventilador,Cobertor,Chuveiro,Campainha|" +
+      "Profissão:Bombeiro,Carteiro,Dentista,Engenheiro,Advogado,Professor,Astronauta,Jornalista,Arquiteto,Motorista,Cozinheiro|" +
+      "Natureza:Floresta,Montanha,Cachoeira,Tempestade,Relâmpago,Primavera,Horizonte|" +
+      "Objeto:Telefone,Computador,Bicicleta|" +
+      "Comida:Chocolate,Brigadeiro,Biscoito,Feijoada,Macarrão,Panqueca|" +
+      "Esporte:Basquete,Ciclismo,Handebol"
+  };
+  const ANA_N = 10, ANA_HINTS = 3;
+  const norm = w => w.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+  const WL = {}, ALLN = new Set();
+  for (const lv in WORDS) {
+    WL[lv] = [];
+    for (const grp of WORDS[lv].split("|")) {
+      const [c, list] = grp.split(":");
+      for (const raw of list.split(",")) { const d = raw.trim(); const w = norm(d); WL[lv].push({ w, d: d.toUpperCase(), c }); ALLN.add(w); }
+    }
+  }
+  const shuf = a => { for (let i = a.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  function scramble(w) {
+    let x, n = 0;
+    do { x = shuf(w.split("")).join(""); } while ((x === w || ALLN.has(x)) && ++n < 60);
+    return x;
+  }
+  function loadWord(st) {
+    const w = st.words[st.idx].w;
+    st.tiles = scramble(w).split(""); st.order = [...st.tiles.keys()];
+    st.slots = new Array(w.length).fill(null); st.locked = new Array(w.length).fill(false);
+  }
+  function newAna(level) {
+    const st = { mode: "anagram", level, words: shuf(WL[level].slice()).slice(0, ANA_N), idx: 0, results: [],
+                 mistakes: 0, hintsLeft: ANA_HINTS, hints: 0, time: 0, won: false, lost: false };
+    loadWord(st); return st;
+  }
+  let busy = false;
+  const TILE_COLORS = [[PAL.coral,"#fff"],[PAL.cream,PAL.wine],[PAL.purple,"#fff"],[PAL.lilac,PAL.purple],[PAL.wine,PAL.cream]];
+  function setupAna() {
+    busy = false;
+    $("#anaMsg").textContent = ""; $("#anaMsg").className = "ana-msg";
+    $("#slots").className = "slots";
+    if (!over() && S.results[S.idx]) return anaNext();   // fechou o app no meio da transição
+    renderAna();
+  }
+  function renderAna() {
+    const cur = S.words[S.idx], n = cur.w.length;
+    $("#anaSub").textContent = `Nível ${LEVELS[S.level].toLowerCase()} · palavra ${Math.min(S.idx + 1, ANA_N)}/${ANA_N}`;
+    $("#anaProg").innerHTML = Array.from({ length: ANA_N }, (_, k) =>
+      `<i class="${S.results[k] || (k === S.idx && !over() ? "cur" : "")}"></i>`).join("");
+    $("#anaCat").textContent = "Dica: " + cur.c;
+    const W = $("#slots").clientWidth || 340, gap = 6;
+    $("#slots").style.setProperty("--s", Math.min(48, Math.floor((W - (n - 1) * gap) / n)) + "px");
+    $("#slots").innerHTML = S.slots.map((t, i) =>
+      `<div class="slot${t != null ? " filled" : ""}${S.locked[i] ? " locked" : ""}" data-i="${i}">${t != null ? S.tiles[t] : ""}</div>`).join("");
+    const per = n <= 6 ? n : Math.ceil(n / 2), tg = 9, TW = $("#tiles").clientWidth || 340;
+    const ts = Math.min(56, Math.floor((TW - (per - 1) * tg) / per));
+    $("#tiles").style.setProperty("--ts", ts + "px");
+    $("#tiles").style.padding = `4px ${Math.max(0, (TW - per * ts - (per - 1) * tg) / 2 - 1)}px 8px`;
+    $("#tiles").innerHTML = S.order.map((t, k) => {
+      const [bg, fg] = TILE_COLORS[t % 5];
+      return `<button class="tile${S.slots.includes(t) ? " used" : ""}" data-t="${t}" style="--c:${bg};--t:${fg}">${S.tiles[t]}</button>`;
+    }).join("");
+    $("#anaHintBadge").textContent = S.hintsLeft;
+    $("#anaHint").classList.toggle("on", S.hintsLeft > 0);
+    $("#anaErr").textContent = S.mistakes + "/" + MAX_ERR;
+    $("#anaTimer").textContent = fmt(S.time);
+  }
+  const anaBlocked = () => busy || over() || !S || S.mode !== "anagram";
+  function anaTap(t) {
+    if (anaBlocked() || S.slots.includes(t)) return;
+    const i = S.slots.indexOf(null); if (i < 0) return;
+    S.slots[i] = t; renderAna(); save();
+    if (!S.slots.includes(null)) anaCheck();
+  }
+  function anaUnslot(i) {
+    if (anaBlocked() || S.locked[i] || S.slots[i] == null) return;
+    S.slots[i] = null; renderAna(); save();
+  }
+  function anaClear() { if (anaBlocked()) return; S.slots = S.slots.map((v, i) => S.locked[i] ? v : null); renderAna(); save(); }
+  function anaShuffle() { if (anaBlocked()) return; S.order = shuf(S.order.slice()); renderAna(); save(); }
+  function anaHint() {
+    if (anaBlocked() || !S.hintsLeft) return;
+    const ans = S.words[S.idx].w, p = S.locked.indexOf(false);
+    if (p < 0) return;
+    S.slots = S.slots.map((v, i) => S.locked[i] ? v : null);
+    const used = new Set(S.slots.filter(v => v != null));
+    const t = S.tiles.findIndex((ch, k) => ch === ans[p] && !used.has(k));
+    S.slots[p] = t; S.locked[p] = true; S.hintsLeft--; S.hints++;
+    renderAna(); const el = $(`.slot[data-i="${p}"]`); if (el) el.classList.add("pop"); save();
+    if (!S.slots.includes(null)) anaCheck();
+  }
+  function anaLose() {
+    S.lost = true; recordResult(S, "lost"); save(); renderAna();
+    setTimeout(() => $("#lostDlg").classList.add("show"), 700);
+  }
+  function anaCheck() {
+    const cur = S.words[S.idx], guess = S.slots.map(t => S.tiles[t]).join("");
+    const msg = $("#anaMsg");
+    if (guess === cur.w || ALLN.has(guess)) {
+      busy = true; S.results[S.idx] = "ok"; save();
+      $("#slots").classList.add("ok");
+      msg.className = "ana-msg"; msg.textContent = "Acertou! " + (guess === cur.w ? cur.d : guess);
+      setTimeout(anaNext, 1000);
+    } else {
+      S.mistakes++; save();
+      $("#slots").classList.remove("shake"); void $("#slots").offsetWidth; $("#slots").classList.add("shake");
+      msg.className = "ana-msg bad"; msg.textContent = "Não é essa…";
+      $("#anaErr").textContent = S.mistakes + "/" + MAX_ERR;
+      if (S.mistakes >= MAX_ERR) { busy = true; return anaLose(); }
+      busy = true;
+      setTimeout(() => { busy = false; $("#slots").classList.remove("shake"); msg.textContent = ""; anaClear(); }, 650);
+    }
+  }
+  function anaSkip() {
+    if (anaBlocked()) return;
+    const cur = S.words[S.idx];
+    busy = true; S.mistakes++; S.results[S.idx] = "skip";
+    const used = new Set();
+    S.slots = cur.w.split("").map(ch => { const t = S.tiles.findIndex((x, k) => x === ch && !used.has(k)); used.add(t); return t; });
+    S.locked = S.locked.map(() => true);
+    save(); renderAna();
+    $("#slots").classList.add("reveal");
+    const msg = $("#anaMsg"); msg.className = "ana-msg bad"; msg.textContent = "Era: " + cur.d;
+    if (S.mistakes >= MAX_ERR) return anaLose();
+    setTimeout(anaNext, 1500);
+  }
+  function anaNext() {
+    $("#slots").className = "slots"; $("#anaMsg").textContent = "";
+    S.idx++;
+    if (S.idx >= ANA_N) {
+      S.idx = ANA_N - 1; S.won = true;
+      const rec = recordResult(S, "won"); save(); renderAna();
+      const okc = S.results.filter(r => r === "ok").length;
+      $("#winText").textContent = (rec ? "🏆 Novo recorde! " : "") +
+        `Anagrama ${LEVELS[S.level].toLowerCase()} em ${fmt(S.time)} · ${okc} de ${ANA_N} palavras` +
+        ` · ${S.mistakes} erro${S.mistakes === 1 ? "" : "s"}`;
+      setTimeout(() => $("#winDlg").classList.add("show"), 300);
+      return;
+    }
+    loadWord(S); busy = false; save(); renderAna();
+  }
+  $("#tiles").addEventListener("click", e => { const b = e.target.closest(".tile"); if (b) anaTap(+b.dataset.t); });
+  $("#slots").addEventListener("click", e => { const b = e.target.closest(".slot"); if (b) anaUnslot(+b.dataset.i); });
+  $("#anaShuffle").onclick = anaShuffle; $("#anaClear").onclick = anaClear;
+  $("#anaHint").onclick = anaHint; $("#anaSkip").onclick = anaSkip;
+  $("#anaBack").onclick = () => { save(); showView("home"); };
+  document.addEventListener("keydown", e => {
+    if (!inAna() || anaBlocked()) return;
+    if (e.key === "Backspace") {
+      for (let i = S.slots.length - 1; i >= 0; i--) if (S.slots[i] != null && !S.locked[i]) { S.slots[i] = null; break; }
+      renderAna(); save(); return;
+    }
+    const L = norm(e.key);
+    if (/^[A-Z]$/.test(L)) { const t = S.order.find(k => S.tiles[k] === L && !S.slots.includes(k)); if (t != null) anaTap(t); }
+  });
 
   // ---------- Ícone ----------
   try {
